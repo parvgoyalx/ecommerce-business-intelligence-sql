@@ -256,3 +256,52 @@ SELECT
     SUM(seller_city IS NULL OR seller_city = '') AS missing_cities,
     SUM(seller_state IS NULL OR seller_state = '') AS missing_states
 FROM olist_sellers_dataset;
+
+
+
+
+-- =====================================================
+-- 8. GEOLOCATION DATASET
+-- STATUS: Imported and validated
+-- =====================================================
+
+-- Total records
+SELECT COUNT(*) AS total_geolocation_records
+FROM olist_geolocation_dataset;
+
+-- Check missing postal prefixes
+SELECT COUNT(*) AS missing_postal_prefixes
+FROM olist_geolocation_dataset
+WHERE geolocation_zip_code_prefix IS NULL;
+
+-- Check missing coordinates
+SELECT
+    SUM(geolocation_lat IS NULL) AS missing_latitudes,
+    SUM(geolocation_lng IS NULL) AS missing_longitudes
+FROM olist_geolocation_dataset;
+
+-- Check coordinate ranges
+SELECT
+    MIN(geolocation_lat) AS minimum_latitude,
+    MAX(geolocation_lat) AS maximum_latitude,
+    MIN(geolocation_lng) AS minimum_longitude,
+    MAX(geolocation_lng) AS maximum_longitude
+FROM olist_geolocation_dataset;
+
+-- Check repeated postal prefixes
+SELECT
+    geolocation_zip_code_prefix,
+    COUNT(*) AS record_count
+FROM olist_geolocation_dataset
+GROUP BY geolocation_zip_code_prefix
+HAVING COUNT(*) > 1
+ORDER BY record_count DESC
+LIMIT 10;
+
+-- Geographic distribution by state
+SELECT
+    geolocation_state,
+    COUNT(*) AS record_count
+FROM olist_geolocation_dataset
+GROUP BY geolocation_state
+ORDER BY record_count DESC;

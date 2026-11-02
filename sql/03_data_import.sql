@@ -202,3 +202,30 @@ IGNORE 1 LINES
     seller_city,
     seller_state
 );
+
+
+
+
+-- =====================================================
+-- 8. GEOLOCATION DATASET
+-- SOURCE: dataset/olist_geolocation_dataset.csv
+-- STATUS: Imported successfully
+-- EXPECTED ROW COUNT: 1,000,163
+-- NOTE: No primary key; duplicate postal prefixes exist.
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/olist_geolocation_dataset.csv'
+INTO TABLE olist_geolocation_dataset
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    geolocation_zip_code_prefix,
+    geolocation_lat,
+    geolocation_lng,
+    geolocation_city,
+    geolocation_state
+);
