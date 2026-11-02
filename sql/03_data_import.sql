@@ -81,3 +81,28 @@ IGNORE 1 LINES
 )
 SET
     shipping_limit_date = NULLIF(@shipping_limit_date, '');
+
+
+
+-- =====================================================
+-- 4. ORDER PAYMENTS DATASET
+-- SOURCE: dataset/olist_order_payments_dataset.csv
+-- STATUS: Imported successfully
+-- EXPECTED ROW COUNT: 103,886
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/olist_order_payments_dataset.csv'
+INTO TABLE olist_order_payments_dataset
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    order_id,
+    payment_sequential,
+    payment_type,
+    payment_installments,
+    payment_value
+);

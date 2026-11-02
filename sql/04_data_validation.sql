@@ -105,3 +105,36 @@ SELECT
     ROUND(SUM(price), 2) AS total_merchandise_sales,
     ROUND(SUM(freight_value), 2) AS total_freight_value
 FROM olist_order_items_dataset;
+
+
+-- =====================================================
+-- 4. ORDER PAYMENT DATASET
+-- STATUS: Imported and validated
+-- =====================================================
+
+-- Total payment records
+SELECT COUNT(*) AS total_payment_records
+FROM olist_order_payments_dataset;
+
+-- Check duplicate composite keys
+SELECT
+    order_id,
+    payment_sequential,
+    COUNT(*) AS duplicate_count
+FROM olist_order_payments_dataset
+GROUP BY order_id, payment_sequential
+HAVING COUNT(*) > 1;
+
+-- Payment method distribution
+SELECT
+    payment_type,
+    COUNT(*) AS transaction_count,
+    ROUND(SUM(payment_value), 2) AS total_payment_value
+FROM olist_order_payments_dataset
+GROUP BY payment_type
+ORDER BY total_payment_value DESC;
+
+-- Check missing order IDs
+SELECT COUNT(*) AS missing_order_ids
+FROM olist_order_payments_dataset
+WHERE order_id IS NULL;
