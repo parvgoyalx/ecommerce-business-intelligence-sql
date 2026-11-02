@@ -52,3 +52,32 @@ SET
     order_delivered_carrier_date = NULLIF(@order_delivered_carrier_date, ''),
     order_delivered_customer_date = NULLIF(@order_delivered_customer_date, ''),
     order_estimated_delivery_date = NULLIF(@order_estimated_delivery_date, '');
+
+
+
+-- =====================================================
+-- 3. ORDER ITEMS DATASET
+-- SOURCE: dataset/olist_order_items_dataset.csv
+-- STATUS: Imported successfully
+-- EXPECTED ROW COUNT: 112,650
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/olist_order_items_dataset.csv'
+INTO TABLE olist_order_items_dataset
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    order_id,
+    order_item_id,
+    product_id,
+    seller_id,
+    @shipping_limit_date,
+    price,
+    freight_value
+)
+SET
+    shipping_limit_date = NULLIF(@shipping_limit_date, '');
