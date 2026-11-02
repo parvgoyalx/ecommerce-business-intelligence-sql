@@ -138,3 +138,42 @@ SET
     review_comment_message = NULLIF(@review_comment_message, ''),
     review_creation_date = NULLIF(@review_creation_date, ''),
     review_answer_timestamp = NULLIF(@review_answer_timestamp, '');
+
+
+
+
+-- =====================================================
+-- 6. PRODUCTS DATASET
+-- SOURCE: dataset/olist_products_dataset.csv
+-- STATUS: Imported successfully
+-- EXPECTED ROW COUNT: 32,951
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/olist_products_dataset.csv'
+INTO TABLE olist_products_dataset
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    product_id,
+    @product_category_name,
+    @product_name_lenght,
+    @product_description_lenght,
+    @product_photos_qty,
+    @product_weight_g,
+    @product_length_cm,
+    @product_height_cm,
+    @product_width_cm
+)
+SET
+    product_category_name = NULLIF(@product_category_name, ''),
+    product_name_lenght = NULLIF(@product_name_lenght, ''),
+    product_description_lenght = NULLIF(@product_description_lenght, ''),
+    product_photos_qty = NULLIF(@product_photos_qty, ''),
+    product_weight_g = NULLIF(@product_weight_g, ''),
+    product_length_cm = NULLIF(@product_length_cm, ''),
+    product_height_cm = NULLIF(@product_height_cm, ''),
+    product_width_cm = NULLIF(@product_width_cm, '');

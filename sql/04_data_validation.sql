@@ -175,3 +175,45 @@ HAVING COUNT(*) > 1;
 SELECT COUNT(*) AS invalid_review_scores
 FROM olist_order_reviews_dataset
 WHERE review_score NOT BETWEEN 1 AND 5;
+
+
+
+
+-- =====================================================
+-- 6. PRODUCTS DATASET'
+-- STATUS: Imported and validated
+-- =====================================================
+
+-- Total products
+SELECT COUNT(*) AS total_products
+FROM olist_products_dataset;
+
+-- Check duplicate product IDs
+SELECT
+    product_id,
+    COUNT(*) AS duplicate_count
+FROM olist_products_dataset
+GROUP BY product_id
+HAVING COUNT(*) > 1;
+
+-- Products by category
+SELECT
+    product_category_name,
+    COUNT(*) AS product_count
+FROM olist_products_dataset
+GROUP BY product_category_name
+ORDER BY product_count DESC
+LIMIT 15;
+
+-- Check missing product IDs
+SELECT COUNT(*) AS missing_product_ids
+FROM olist_products_dataset
+WHERE product_id IS NULL;
+
+-- Check missing product dimensions
+SELECT
+    SUM(product_weight_g IS NULL) AS missing_weight,
+    SUM(product_length_cm IS NULL) AS missing_length,
+    SUM(product_height_cm IS NULL) AS missing_height,
+    SUM(product_width_cm IS NULL) AS missing_width
+FROM olist_products_dataset;
