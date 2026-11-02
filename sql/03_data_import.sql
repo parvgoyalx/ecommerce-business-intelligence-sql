@@ -1,21 +1,54 @@
--- ==========================================
--- PROJECT: E-Commerce Business Intelligence
+-- =====================================================
 -- FILE: 03_data_import.sql
--- PURPOSE: Document CSV data import commands
--- ==========================================
+-- PURPOSE: Load CSV files into MySQL tables
+-- NOTE: Run imports after creating the corresponding tables.
+-- =====================================================
 
 USE ecommerce_analytics;
 
--- Customer CSV import
--- Execute this in MySQL Command Line Client
--- after enabling LOCAL INFILE.
--- Replace the file path with your own local path.
+
+-- =====================================================
+-- 1. CUSTOMERS DATASET
+-- STATUS: Imported
+-- =====================================================
 
 LOAD DATA LOCAL INFILE
-'C:/YOUR_USERNAME/Downloads/olist_customers_dataset.csv'
+'C:/ecommerce-business-intelligence-sql/dataset/olist_customers_dataset.csv'
 INTO TABLE olist_customers_dataset
 CHARACTER SET utf8mb4
 FIELDS TERMINATED BY ','
 ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 LINES;
+
+
+-- =====================================================
+-- 2. ORDERS DATASET
+-- SOURCE: dataset/olist_orders_dataset.csv
+-- STATUS: Imported successfully
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/olist_orders_dataset.csv'
+INTO TABLE olist_orders_dataset
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    order_id,
+    customer_id,
+    order_status,
+    @order_purchase_timestamp,
+    @order_approved_at,
+    @order_delivered_carrier_date,
+    @order_delivered_customer_date,
+    @order_estimated_delivery_date
+)
+SET
+    order_purchase_timestamp = NULLIF(@order_purchase_timestamp, ''),
+    order_approved_at = NULLIF(@order_approved_at, ''),
+    order_delivered_carrier_date = NULLIF(@order_delivered_carrier_date, ''),
+    order_delivered_customer_date = NULLIF(@order_delivered_customer_date, ''),
+    order_estimated_delivery_date = NULLIF(@order_estimated_delivery_date, '');
