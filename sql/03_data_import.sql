@@ -106,3 +106,35 @@ IGNORE 1 LINES
     payment_installments,
     payment_value
 );
+
+
+
+-- =====================================================
+-- 5. ORDER REVIEWS DATASET
+-- SOURCE: dataset/olist_order_reviews_dataset.csv
+-- STATUS: Imported successfully
+-- EXPECTED ROW COUNT: 99,224
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/olist_order_reviews_dataset.csv'
+INTO TABLE olist_order_reviews_dataset
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    review_id,
+    order_id,
+    review_score,
+    @review_comment_title,
+    @review_comment_message,
+    @review_creation_date,
+    @review_answer_timestamp
+)
+SET
+    review_comment_title = NULLIF(@review_comment_title, ''),
+    review_comment_message = NULLIF(@review_comment_message, ''),
+    review_creation_date = NULLIF(@review_creation_date, ''),
+    review_answer_timestamp = NULLIF(@review_answer_timestamp, '');

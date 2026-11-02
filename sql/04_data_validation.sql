@@ -138,3 +138,40 @@ ORDER BY total_payment_value DESC;
 SELECT COUNT(*) AS missing_order_ids
 FROM olist_order_payments_dataset
 WHERE order_id IS NULL;
+
+
+
+-- =====================================================
+-- 5. ORDER REVIEWS DATASET
+-- STATUS: Imported and validated
+-- =====================================================
+
+-- Total review records
+SELECT COUNT(*) AS total_reviews
+FROM olist_order_reviews_dataset;
+
+-- Review score distribution
+SELECT
+    review_score,
+    COUNT(*) AS review_count
+FROM olist_order_reviews_dataset
+GROUP BY review_score
+ORDER BY review_score;
+
+-- Average review score
+SELECT
+    ROUND(AVG(review_score), 2) AS average_review_score
+FROM olist_order_reviews_dataset;
+
+-- Check duplicate review IDs
+SELECT
+    review_id,
+    COUNT(*) AS duplicate_count
+FROM olist_order_reviews_dataset
+GROUP BY review_id
+HAVING COUNT(*) > 1;
+
+-- Check invalid review scores
+SELECT COUNT(*) AS invalid_review_scores
+FROM olist_order_reviews_dataset
+WHERE review_score NOT BETWEEN 1 AND 5;
