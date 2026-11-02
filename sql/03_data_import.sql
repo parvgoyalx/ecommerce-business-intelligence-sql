@@ -229,3 +229,26 @@ IGNORE 1 LINES
     geolocation_city,
     geolocation_state
 );
+
+
+
+
+-- =====================================================
+-- 9. PRODUCT CATEGORY TRANSLATION DATASET
+-- SOURCE: dataset/product_category_name_translation.csv
+-- STATUS: Imported successfully
+-- EXPECTED ROW COUNT: 71
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/product_category_name_translation.csv'
+INTO TABLE product_category_name_translation
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    product_category_name,
+    product_category_name_english
+);

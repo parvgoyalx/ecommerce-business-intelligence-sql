@@ -305,3 +305,34 @@ SELECT
 FROM olist_geolocation_dataset
 GROUP BY geolocation_state
 ORDER BY record_count DESC;
+
+
+
+
+-- =====================================================
+-- 9. PRODUCT CATEGORY TRANSLATION DATASET
+-- STATUS: Imported and validated
+-- =====================================================
+
+-- Total translation records
+SELECT COUNT(*) AS total_translation_records
+FROM product_category_name_translation;
+
+-- Check duplicate category names
+SELECT
+    product_category_name,
+    COUNT(*) AS duplicate_count
+FROM product_category_name_translation
+GROUP BY product_category_name
+HAVING COUNT(*) > 1;
+
+-- Check missing English translations
+SELECT COUNT(*) AS missing_english_translations
+FROM product_category_name_translation
+WHERE product_category_name_english IS NULL
+   OR product_category_name_english = '';
+
+-- Preview translations
+SELECT *
+FROM product_category_name_translation
+LIMIT 10;
