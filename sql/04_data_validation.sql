@@ -217,3 +217,42 @@ SELECT
     SUM(product_height_cm IS NULL) AS missing_height,
     SUM(product_width_cm IS NULL) AS missing_width
 FROM olist_products_dataset;
+
+
+
+
+-- =====================================================
+-- 7. SELLERS DATASET
+-- STATUS: Imported and validated
+-- =====================================================
+
+-- Total sellers
+SELECT COUNT(*) AS total_sellers
+FROM olist_sellers_dataset;
+
+-- Check duplicate seller IDs
+SELECT
+    seller_id,
+    COUNT(*) AS duplicate_count
+FROM olist_sellers_dataset
+GROUP BY seller_id
+HAVING COUNT(*) > 1;
+
+-- Sellers by state
+SELECT
+    seller_state,
+    COUNT(*) AS seller_count
+FROM olist_sellers_dataset
+GROUP BY seller_state
+ORDER BY seller_count DESC;
+
+-- Check missing seller IDs
+SELECT COUNT(*) AS missing_seller_ids
+FROM olist_sellers_dataset
+WHERE seller_id IS NULL;
+
+-- Check missing city and state
+SELECT
+    SUM(seller_city IS NULL OR seller_city = '') AS missing_cities,
+    SUM(seller_state IS NULL OR seller_state = '') AS missing_states
+FROM olist_sellers_dataset;

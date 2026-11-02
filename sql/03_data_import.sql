@@ -177,3 +177,28 @@ SET
     product_length_cm = NULLIF(@product_length_cm, ''),
     product_height_cm = NULLIF(@product_height_cm, ''),
     product_width_cm = NULLIF(@product_width_cm, '');
+
+
+
+
+-- =====================================================
+-- 7. SELLERS DATASET
+-- SOURCE: dataset/olist_sellers_dataset.csv
+-- STATUS: Imported successfully
+-- EXPECTED ROW COUNT: 3,095
+-- =====================================================
+
+LOAD DATA LOCAL INFILE
+'C:/ecommerce-business-intelligence-sql/dataset/olist_sellers_dataset.csv'
+INTO TABLE olist_sellers_dataset
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 LINES
+(
+    seller_id,
+    seller_zip_code_prefix,
+    seller_city,
+    seller_state
+);
