@@ -883,3 +883,450 @@ WHERE freight_value = 0
 GROUP BY seller_id
 
 ORDER BY zero_freight_items DESC;
+
+
+
+
+-- =====================================================
+-- ORDER ITEMS: ZERO FREIGHT RATE BY SELLER
+-- =====================================================
+
+-- PURPOSE:
+-- Measure the proportion of each seller's order items
+-- that have zero freight charges.
+
+-- OBJECTIVE:
+-- Determine whether zero freight is common or unusual
+-- within each seller's overall order-item activity.
+
+-- METHODOLOGY:
+-- Count all order items per seller.
+-- Count zero-freight items per seller.
+-- Calculate the percentage of zero-freight items.
+
+-- NOTE:
+-- A high percentage does not automatically indicate
+-- a data-quality error. Further investigation may be
+-- required to understand the shipping arrangement.
+
+-- =====================================================
+
+
+
+SELECT
+    seller_id,
+
+    COUNT(*) AS total_items,
+
+    SUM(
+        CASE
+            WHEN freight_value = 0 THEN 1
+            ELSE 0
+        END
+    ) AS zero_freight_items,
+
+    ROUND(
+        100.0 * SUM(
+            CASE
+                WHEN freight_value = 0 THEN 1
+                ELSE 0
+            END
+        ) / COUNT(*),
+        2
+    ) AS zero_freight_percentage
+
+FROM vw_clean_order_items
+
+GROUP BY seller_id
+
+HAVING SUM(
+    CASE
+        WHEN freight_value = 0 THEN 1
+        ELSE 0
+    END
+) > 0
+
+ORDER BY zero_freight_percentage DESC;
+
+
+
+-- ============================================================
+-- INVESTIGATION: ZERO FREIGHT BY PRODUCT CATEGORY
+-- ============================================================
+-- PURPOSE:
+-- Determine whether zero-freight items are concentrated in
+-- specific product categories.
+--
+-- METHOD:
+-- Join order items with product details using product_id.
+-- Count all items and zero-freight items in each category.
+-- Calculate the percentage of items with zero freight.
+--
+-- NOTE:
+-- Zero freight is flagged for investigation, not automatically
+-- classified as an error.
+-- ============================================================
+
+SELECT
+    COALESCE(p.product_category_name, 'unknown') AS product_category,
+
+    COUNT(*) AS total_items,
+
+    SUM(
+        CASE
+            WHEN oi.freight_value = 0 THEN 1
+            ELSE 0
+        END
+    ) AS zero_freight_items,
+
+    ROUND(
+        SUM(
+            CASE
+                WHEN oi.freight_value = 0 THEN 1
+                ELSE 0
+            END
+        ) * 100.0 / COUNT(*),
+        2
+    ) AS zero_freight_percentage
+
+FROM vw_clean_order_items oi
+
+LEFT JOIN olist_products_dataset p
+    ON oi.product_id = p.product_id
+
+GROUP BY
+    COALESCE(p.product_category_name, 'unknown')
+
+HAVING
+    SUM(
+        CASE
+            WHEN oi.freight_value = 0 THEN 1
+            ELSE 0
+        END
+    ) > 0
+
+ORDER BY
+    zero_freight_percentage DESC;
+
+
+
+
+-- ============================================================
+-- INVESTIGATION: ZERO FREIGHT BY SELLER AND PRODUCT CATEGORY
+-- ============================================================
+-- PURPOSE:
+-- Identify which sellers have zero-freight items in which
+-- product categories.
+--
+-- This combines the seller-level and category-level findings.
+-- It may help identify whether the zero-freight pattern is
+-- concentrated in particular seller-category combinations.
+--
+-- Only combinations with at least 5 zero-freight items
+-- are displayed to keep the results manageable.
+--
+-- Zero freight is flagged for investigation, not automatically
+-- classified as an error.
+-- ============================================================
+
+SELECT
+    oi.seller_id,
+    COALESCE(p.product_category_name, 'unknown') AS product_category,
+
+    COUNT(*) AS total_items,
+
+    SUM(
+        CASE
+            WHEN oi.freight_value = 0 THEN 1
+            ELSE 0
+        END
+    ) AS zero_freight_items,
+
+    ROUND(
+        SUM(
+            CASE
+                WHEN oi.freight_value = 0 THEN 1
+                ELSE 0
+            END
+        ) * 100.0 / COUNT(*),
+        2
+    ) AS zero_freight_percentage
+
+FROM vw_clean_order_items oi
+
+LEFT JOIN olist_products_dataset p
+    ON oi.product_id = p.product_id
+
+GROUP BY
+    oi.seller_id,
+    COALESCE(p.product_category_name, 'unknown')
+
+HAVING
+    SUM(
+        CASE
+            WHEN oi.freight_value = 0 THEN 1
+            ELSE 0
+        END
+    ) >= 5
+
+ORDER BY
+    zero_freight_items DESC;
+
+
+
+
+-- ============================================================
+-- INVESTIGATION: ZERO FREIGHT BY MONTH
+-- ============================================================
+-- PURPOSE:
+-- Determine whether zero-freight order items are concentrated
+-- in particular months.
+--
+-- METHOD:
+-- Use the order purchase timestamp to group items by month.
+-- Compare total items with zero-freight items in each month.
+--
+-- NOTE:
+-- This is an investigation of a data pattern.
+-- Zero freight is not automatically treated as an error.
+-- ============================================================
+
+SELECT
+    DATE_FORMAT(o.order_purchase_timestamp, '%Y-%m') AS order_month,
+
+    COUNT(*) AS total_items,
+
+    SUM(
+        CASE
+            WHEN oi.freight_value = 0 THEN 1
+            ELSE 0
+        END
+    ) AS zero_freight_items,
+
+    ROUND(
+        SUM(
+            CASE
+                WHEN oi.freight_value = 0 THEN 1
+                ELSE 0
+            END
+        ) * 100.0 / COUNT(*),
+        2
+    ) AS zero_freight_percentage
+
+FROM vw_clean_order_items oi
+
+INNER JOIN vw_clean_orders o
+    ON oi.order_id = o.order_id
+
+GROUP BY
+    DATE_FORMAT(o.order_purchase_timestamp, '%Y-%m')
+
+ORDER BY
+    order_month;
+
+
+
+-- =====================================================
+-- ZERO-FREIGHT INVESTIGATION: BREAKDOWN BY ORDER STATUS
+-- =====================================================
+
+SELECT
+    o.order_status,
+    COUNT(*) AS zero_freight_items,
+    COUNT(DISTINCT oi.order_id) AS affected_orders,
+    ROUND(SUM(oi.price), 2) AS total_item_value
+FROM vw_clean_order_items oi
+JOIN olist_orders_dataset o
+    ON oi.order_id = o.order_id
+WHERE oi.freight_value = 0
+GROUP BY o.order_status
+ORDER BY zero_freight_items DESC;
+
+
+
+-- =====================================================
+-- ZERO-FREIGHT ORDERS: PAYMENT RECONCILIATION
+-- =====================================================
+
+WITH zero_freight_orders AS (
+    SELECT DISTINCT order_id
+    FROM vw_clean_order_items
+    WHERE freight_value = 0
+),
+
+item_totals AS (
+    SELECT
+        oi.order_id,
+        SUM(oi.price) AS item_value,
+        SUM(oi.freight_value) AS freight_value
+    FROM vw_clean_order_items oi
+    JOIN zero_freight_orders z
+        ON oi.order_id = z.order_id
+    GROUP BY oi.order_id
+),
+
+payment_totals AS (
+    SELECT
+        order_id,
+        SUM(payment_value) AS payment_value
+    FROM olist_order_payments_dataset
+    GROUP BY order_id
+)
+
+SELECT
+    o.order_status,
+    COUNT(*) AS total_orders,
+    ROUND(SUM(i.item_value), 2) AS total_item_value,
+    ROUND(SUM(i.freight_value), 2) AS total_freight_value,
+    ROUND(SUM(p.payment_value), 2) AS total_payment_value,
+    ROUND(
+        SUM(p.payment_value - i.item_value - i.freight_value),
+        2
+    ) AS payment_difference
+FROM item_totals i
+JOIN payment_totals p
+    ON i.order_id = p.order_id
+JOIN olist_orders_dataset o
+    ON i.order_id = o.order_id
+GROUP BY o.order_status;
+
+
+
+/*
+ZERO-FREIGHT INVESTIGATION — FINDINGS
+
+1. Identified 383 items with zero freight value.
+2. These items belong to 339 orders:
+   - 337 delivered orders
+   - 2 shipped orders
+3. Reconciled item value + freight against payment totals.
+4. Payment differences were 0.00 for both order statuses.
+
+DECISION:
+Retain zero-freight records.
+Do not replace zero with NULL or delete these records.
+Order-level payment reconciliation supports the recorded totals.
+*/
+
+
+-- =====================================================
+-- ORDER TIMESTAMP CHRONOLOGY VALIDATION
+-- =====================================================
+
+SELECT
+    COUNT(*) AS total_orders,
+
+    SUM(
+        CASE
+            WHEN order_approved_at < order_purchase_timestamp
+            THEN 1 ELSE 0
+        END
+    ) AS approval_before_purchase,
+
+    SUM(
+        CASE
+            WHEN order_delivered_carrier_date < order_approved_at
+            THEN 1 ELSE 0
+        END
+    ) AS carrier_before_approval,
+
+    SUM(
+        CASE
+            WHEN order_delivered_customer_date < order_delivered_carrier_date
+            THEN 1 ELSE 0
+        END
+    ) AS customer_delivery_before_carrier,
+
+    SUM(
+        CASE
+            WHEN order_estimated_delivery_date < order_purchase_timestamp
+            THEN 1 ELSE 0
+        END
+    ) AS estimated_delivery_before_purchase
+
+FROM olist_orders_dataset;
+
+
+
+-- =====================================================
+-- INVESTIGATE CARRIER DATE BEFORE APPROVAL
+-- =====================================================
+
+SELECT
+    order_id,
+    order_status,
+    order_purchase_timestamp,
+    order_approved_at,
+    order_delivered_carrier_date,
+    TIMESTAMPDIFF(
+        HOUR,
+        order_delivered_carrier_date,
+        order_approved_at
+    ) AS hours_before_approval
+FROM olist_orders_dataset
+WHERE order_delivered_carrier_date < order_approved_at
+ORDER BY hours_before_approval DESC
+LIMIT 30;
+
+
+
+-- =====================================================
+-- FINAL DATA CLEANING VALIDATION
+-- =====================================================
+
+-- 1. Check duplicate order IDs
+SELECT
+    order_id,
+    COUNT(*) AS duplicate_count
+FROM olist_orders_dataset
+GROUP BY order_id
+HAVING COUNT(*) > 1;
+
+-- 2. Check duplicate customer IDs
+SELECT
+    customer_id,
+    COUNT(*) AS duplicate_count
+FROM olist_customers_dataset
+GROUP BY customer_id
+HAVING COUNT(*) > 1;
+
+-- 3. Check invalid order statuses
+SELECT
+    order_status,
+    COUNT(*) AS record_count
+FROM olist_orders_dataset
+WHERE order_status IS NULL
+   OR TRIM(order_status) = ''
+GROUP BY order_status;
+
+-- 4. Check missing customer identifiers
+SELECT
+    COUNT(*) AS missing_customer_ids
+FROM olist_customers_dataset
+WHERE customer_id IS NULL
+   OR TRIM(customer_id) = '';
+
+-- 5. Check invalid item prices or freight values
+SELECT
+    COUNT(*) AS invalid_order_items
+FROM olist_order_items_dataset
+WHERE price < 0
+   OR freight_value < 0
+   OR price IS NULL
+   OR freight_value IS NULL;
+
+-- 6. Check invalid order timestamps
+SELECT
+    COUNT(*) AS invalid_purchase_timestamps
+FROM olist_orders_dataset
+WHERE order_purchase_timestamp IS NULL;
+
+-- 7. Final table row counts
+SELECT 'customers' AS table_name, COUNT(*) AS total_rows
+FROM olist_customers_dataset
+UNION ALL
+SELECT 'orders', COUNT(*)
+FROM olist_orders_dataset
+UNION ALL
+SELECT 'order_items', COUNT(*)
+FROM olist_order_items_dataset;
